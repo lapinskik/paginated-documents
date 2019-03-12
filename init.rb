@@ -1,6 +1,9 @@
 require 'redmine'
 require 'pagination_documents_patch'
 
+Rails.application.paths["app/overrides"] ||= []
+Rails.application.paths["app/overrides"] << File.expand_path("../app/overrides", __FILE__)
+
 Redmine::Plugin.register :paginated_documents do
   name 'Paginated Documents plugin'
   author 'Krystian Łapiński'
