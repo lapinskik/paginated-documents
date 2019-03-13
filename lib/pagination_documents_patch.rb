@@ -3,7 +3,9 @@ module DocumentsControllerPatch
     base.class_eval do
       def index
         @sort_by = %w(category date title author).include?(params[:sort_by]) ? params[:sort_by] : 'category'
-        documents = @project.documents.includes(:attachments, :category).to_a
+        documents = @project.documents
+        documents = formPagination(documents)
+        documents.includes(:attachments, :category).to_a
         case @sort_by
         when 'date'
           @grouped = documents.group_by {|d| d.updated_on.to_date }
@@ -16,6 +18,18 @@ module DocumentsControllerPatch
         end
         @document = @project.documents.build
         render :layout => false if request.xhr?
+      end
+
+      def formPagination(entries)
+    		@entry_count = entries.count
+            setLimitAndOffset()
+    		@document = entries.order(:created_on).limit(@limit).offset(@offset)
+    	end
+
+      def setLimitAndOffset
+  			@entry_pages = Paginator.new @entry_count, per_page_option, params['page']
+  			@limit = @entry_pages.per_page
+  			@offset = @entry_pages.offset
       end
 
       def create
