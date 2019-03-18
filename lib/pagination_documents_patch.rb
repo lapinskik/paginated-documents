@@ -1,18 +1,27 @@
 module DocumentsControllerPatch
   def self.included(base)
     base.class_eval do
+      def search(documents, search_params)
+        documents = documents.where(id: CustomValue.where(custom_field_id: CustomField.where(id: search_params['cf-id']).ids, value: search_params['cf-value']).map(&:customized_id).uniq)
+      end
+
       def index
-        @sort_by = %w(category date title author).include?(params[:sort_by]) ? params[:sort_by] : 'category'
+        @custom_fields = CustomField.where(type: 'DocumentCustomField')
+        Rails.logger.error params[:sort_by]
+        @sort_by = (%w(category date title author).include?(params[:sort_by]) || (params.has_key?(:sort_by) && params[:sort_by].start_with?('cf-') && params[:sort_by].split('cf-')[1].to_i.in?(@custom_fields.ids) )) ? params[:sort_by] : 'category'
         documents = @project.documents
         documents = formPagination(documents)
         documents.includes(:attachments, :category).to_a
-        case @sort_by
-        when 'date'
+        if @sort_by.eql? 'date'
           @grouped = documents.group_by {|d| d.updated_on.to_date }
-        when 'title'
+        elsif @sort_by.eql? 'title'
           @grouped = documents.group_by {|d| d.title.first.upcase}
-        when 'author'
+        elsif @sort_by.eql? 'author'
           @grouped = documents.select{|d| d.attachments.any?}.group_by {|d| d.attachments.last.author}
+        elsif @sort_by.start_with?("cf-")
+          cf_num = @sort_by.split('cf-')[1].to_i
+          @grouped = documents.group_by {|d| d.custom_field_value(cf_num)}
+          # @grouped = documents.where(id: CustomValue.where(custom_field_id: CustomField.where(id: ).ids).ids).group_by {|d| d.custom_field_values}
         else
           @grouped = documents.group_by(&:category)
         end
