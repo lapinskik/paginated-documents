@@ -1,1 +1,3 @@
- </li><li>x2137
+<% @custom_fields.each do |custom_field| %>
+</li><li><%= link_to(custom_field.name, {:sort_by => 'cf-'+custom_field.id.to_s}, :class => (@sort_by == ('cf-'+custom_field.id.to_s) ? 'selected' :nil)) %>
+<% end %>

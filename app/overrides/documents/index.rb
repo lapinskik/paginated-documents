@@ -9,5 +9,5 @@ Deface::Override.new(:virtual_path => "documents/index",
                     :insert_after => "erb[loud]:contains('l(:field_author)')",
                     # :text => '<%= render "overrides/documents/search" %>'
                     # :partial => 'overrides/documents/search'
-                    :text => "</li><li><%= link_to(@custom_fields.first.name, {:sort_by => 'cf-'+@custom_fields.first.id.to_s}, :class => (@sort_by == ('cf-'+@custom_fields.first.id.to_s) ? 'selected' :nil)) %>"
+                    :partial => 'overrides/documents/search'
                 )
