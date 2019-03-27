@@ -1,0 +1,57 @@
+<div class="contextual">
+<%= link_to l(:label_document_new), new_project_document_path(@project), :class => 'icon icon-add',
+      :onclick => 'showAndScrollTo("add-document", "document_title"); return false;' if User.current.allowed_to?(:add_documents, @project) %>
+</div>
+
+<div id="add-document" style="display:none;">
+<h2><%=l(:label_document_new)%></h2>
+<%= labelled_form_for @document, :url => project_documents_path(@project), :html => {:multipart => true} do |f| %>
+<%= render :partial => 'form', :locals => {:f => f} %>
+<p>
+  <%= submit_tag l(:button_create) %>
+  <%= link_to l(:button_cancel), "#", :onclick => '$("#add-document").hide(); return false;' %>
+</p>
+<% end %>
+</div>
+
+<h2><%=l(:label_document_plural)%></h2>
+<p>No to tutaj ten no szukajka xD</p>
+
+<% if @sorted.empty? %><p class="nodata"><%= l(:label_no_data) %></p><% end %>
+<% custom_fields = CustomField.where(type: 'DocumentCustomField').group_by{|cf| cf[:id]} %>
+<% @sorted.each do |document| %>
+<h4><%= link_to document.title, document_path(document) %> [<%= document.category %>]</h4>
+<% if @document_custom_fields_values_hash[document.id].present? %>
+<ul>
+  <% @document_custom_fields_values_hash[document.id].each do |custom_value| %>
+    <li><span class="label"><%= custom_fields[custom_value.custom_field_id][0].name %>: </span><%= custom_fields[custom_value.custom_field_id][0].format.formatted_custom_value(self, custom_value, true) %>
+    </li>
+  <% end %>
+</ul>
+<% end %>
+
+<div class="wiki">
+  <%= textilizable(truncate_lines(document.description), :object => document) %>
+</div>
+<p><em><%= format_time(document.updated_on) %></em> <% if document.attachments.present? %> - <em><%= document.attachments.last.author %></em><% end %></p>
+<% end %>
+<span class="pagination"><%= pagination_links_full @entry_pages, @entry_count %></span>
+
+<% content_for :sidebar do %>
+  <h3><%= l(:label_sort_by, '') %></h3>
+  <ul>
+    <li><%= link_to(l(:field_category), {:sort_by => 'category'},
+                    :class => (@sort_by == 'category' ? 'selected' :nil)) %></li>
+    <li><%= link_to(l(:label_date), {:sort_by => 'date'},
+                    :class => (@sort_by == 'date' ? 'selected' :nil)) %></li>
+    <li><%= link_to(l(:field_title), {:sort_by => 'title'},
+                    :class => (@sort_by == 'title' ? 'selected' :nil)) %></li>
+    <li><%= link_to(l(:field_author), {:sort_by => 'author'},
+                    :class => (@sort_by == 'author' ? 'selected' :nil)) %></li>
+    <% @custom_fields.each do |custom_field| %>
+      <li><%= link_to(custom_field.name, {:sort_by => 'cf-'+custom_field.id.to_s}, :class => (@sort_by == ('cf-'+custom_field.id.to_s) ? 'selected' :nil)) %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% html_title(l(:label_document_plural)) -%>
